@@ -31,24 +31,28 @@ public class BookManagerService extends Service {
     private Binder mBinder = new IBookManager.Stub() {
         @Override
         public List<Book> getBookList() throws RemoteException {
+            Log.d(TAG, "getBookList-进程名称：" + Utils.getAppName(BookManagerService.this, android.os.Process.myPid()) +", 线程名称：" + Thread.currentThread().getName());
             return mBookList;
         }
 
         @Override
         public void addBook(Book book) throws RemoteException {
+            Log.d(TAG, "addBook-进程名称：" + Utils.getAppName(BookManagerService.this, android.os.Process.myPid()) +", 线程名称：" + Thread.currentThread().getName());
             mBookList.add(book);
         }
 
         @Override
         public void registerListener(IOnNewBookArrivedListener listener) throws RemoteException {
             mListeners.register(listener);
-            Log.d(TAG, "registerListener, size:" + mListeners.beginBroadcast());
+            Log.d(TAG, "registerListener-进程名称：" + Utils.getAppName(BookManagerService.this, android.os.Process.myPid()) +", 线程名称：" + Thread.currentThread().getName() + ", 回调数：" + mListeners.beginBroadcast());
+            mListeners.finishBroadcast();
         }
 
         @Override
         public void unRegisterListener(IOnNewBookArrivedListener listener) throws RemoteException {
             mListeners.unregister(listener);
-            Log.d(TAG, "unRegisterListener, size:" + mListeners.beginBroadcast());
+            Log.d(TAG, "registerListener-进程名称：" + Utils.getAppName(BookManagerService.this, android.os.Process.myPid()) +", 线程名称：" + Thread.currentThread().getName() + ", 回调数：" + mListeners.beginBroadcast());
+            mListeners.finishBroadcast();
         }
     };
 
@@ -74,7 +78,6 @@ public class BookManagerService extends Service {
 
     private void onNewBookArrived(Book book) throws RemoteException {
         mBookList.add(book);
-        Log.d(TAG, "onNewBookArrived, notify listeners:" + mBookList.size());
         final int N = mListeners.beginBroadcast();
         for (int i = 0; i < N; i++) {
             IOnNewBookArrivedListener l = mListeners.getBroadcastItem(i);
