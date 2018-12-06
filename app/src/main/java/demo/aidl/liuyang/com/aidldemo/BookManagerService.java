@@ -2,6 +2,7 @@ package demo.aidl.liuyang.com.aidldemo;
 
 import android.app.Service;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Binder;
 import android.os.IBinder;
 import android.os.RemoteCallbackList;
@@ -67,6 +68,10 @@ public class BookManagerService extends Service {
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
+        int check = checkCallingOrSelfPermission("demo.aidl.liuyang.com.aidldemo.Permission.ACCESS_BOOK_MANAGER");
+        if (check == PackageManager.PERMISSION_DENIED) {
+            return null;
+        }
         return mBinder;
     }
 

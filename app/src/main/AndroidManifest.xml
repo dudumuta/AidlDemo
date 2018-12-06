@@ -2,6 +2,12 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="demo.aidl.liuyang.com.aidldemo">
 
+    <permission
+        android:name="demo.aidl.liuyang.com.aidldemo.Permission.ACCESS_BOOK_MANAGER"
+        android:protectionLevel="normal" />
+
+    <uses-permission android:name="demo.aidl.liuyang.com.aidldemo.Permission.ACCESS_BOOK_MANAGER"/>
+
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
