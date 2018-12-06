@@ -60,6 +60,11 @@ public class BookManagerActivity extends FragmentActivity {
             IBookManager bookManager = IBookManager.Stub.asInterface(iBinder);
             mRemoteBookManager = bookManager;
             try {
+                iBinder.linkToDeath(mDeathRecipient, 0);
+            } catch (RemoteException e) {
+                e.printStackTrace();
+            }
+            try {
                 List<Book> list = bookManager.getBookList();
                 Log.d(TAG, "onServiceConnected getBookList-进程名称：" + Utils.getAppName(BookManagerActivity.this, android.os.Process.myPid()) +", 线程名称：" + Thread.currentThread().getName() + ", list数：" + list.size());
                 Book book = new Book(3, "Android 进阶");
@@ -74,7 +79,28 @@ public class BookManagerActivity extends FragmentActivity {
 
         @Override
         public void onServiceDisconnected(ComponentName componentName) {
+            Log.d(TAG, "onServiceDisconnected-远端掉线");
             mRemoteBookManager = null;
+
+            Intent intent = new Intent(BookManagerActivity.this, BookManagerService.class);
+            bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
+        }
+    };
+
+    private IBinder.DeathRecipient mDeathRecipient = new IBinder.DeathRecipient() {
+        @Override
+        public void binderDied() {
+            Log.d(TAG, "DeathRecipient-远端掉线");
+            if (mRemoteBookManager == null) {
+                return;
+            }
+
+            mRemoteBookManager.asBinder().unlinkToDeath(mDeathRecipient, 0);
+            mRemoteBookManager = null;
+
+            //断线重连
+            Intent intent = new Intent(BookManagerActivity.this, BookManagerService.class);
+            bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
         }
     };
 
