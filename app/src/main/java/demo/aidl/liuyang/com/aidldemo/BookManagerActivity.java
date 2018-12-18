@@ -9,6 +9,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
+import android.os.Messenger;
 import android.os.RemoteException;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
@@ -109,12 +110,56 @@ public class BookManagerActivity extends AppCompatActivity {
         }
     };
 
+    private Messenger mServiceMessenger;
+
+    private ServiceConnection mMessengerConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
+            mServiceMessenger = new Messenger(iBinder);
+            Message msg = android.os.Message.obtain(null, 110);
+            Bundle data = new Bundle();
+            data.putString("msg", "hello, this is client.");
+            msg.setData(data);
+            msg.replyTo = mClientMessenger;
+
+            try {
+                mServiceMessenger.send(msg);
+            } catch (RemoteException e) {
+                e.printStackTrace();
+            }
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName componentName) {
+
+        }
+    };
+
+    private Messenger mClientMessenger = new Messenger(new MessengerHandler());
+
+    private static class MessengerHandler extends Handler {
+
+        @Override
+        public void handleMessage(Message msg) {
+            switch (msg.what) {
+                case 120:
+                    Log.i(TAG, "receive msg from Service:" + msg.getData().getString("reply"));
+                    break;
+                default:
+                    super.handleMessage(msg);
+            }
+        }
+    }
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         Intent intent = new Intent(this, BookManagerService.class);
         bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
+
+        Intent messengerIntent = new Intent(this, MessengerService.class);
+        bindService(messengerIntent, mMessengerConnection, Context.BIND_AUTO_CREATE);
 
         new Thread(new Runnable() {
             @Override
@@ -134,6 +179,7 @@ public class BookManagerActivity extends AppCompatActivity {
             }
         }
         unbindService(mConnection);
+        unbindService(mMessengerConnection);
         super.onDestroy();
     }
 
